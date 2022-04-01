@@ -21,6 +21,9 @@ import { useParams } from "react-router-dom";
 import Button from '@material-ui/core/Button';
 import NavBarAdmin from "../../components/NavBarAdmin";
 import Rodape from '../../components/Rodape';
+import Typography from '@material-ui/core/Typography';
+import Collapse from '@material-ui/core/Collapse';
+import Box from '@material-ui/core/Box';
 
 const drawerWidth = 240;
 
@@ -113,6 +116,8 @@ export default function Contratos() {
   const classes = useStyles();
   const [loading, setLoading] = useState(true);
   const [quantidade, setQuantidade] = useState(0.0);
+  const [quantidadeRecebida, setQuantidadeRecebida] = useState(0.0);
+
   const [valor_total, setValorTotal] = useState(0.0);
   const [quantidade_ctrs, setQuantidadeCtrs] = useState(0);
 
@@ -131,7 +136,7 @@ export default function Contratos() {
 
 
   function checkDimenssoes() {
-   
+
     var altura = window.innerHeight
       || document.documentElement.clientHeight
       || document.body.clientHeight;
@@ -143,6 +148,13 @@ export default function Contratos() {
 
   window.addEventListener('resize', function (event) {
     checkDimenssoes();
+  });
+
+  var formatter = new Intl.NumberFormat('pt-BR', {
+    style: 'currency',
+    currency: 'BRL',
+
+
   });
 
 
@@ -181,17 +193,25 @@ export default function Contratos() {
         let soma = 0;
         let valor = 0;
         let contador = 0;
+
+        let somaRecebida = 0;
+
         for (let i in novaListaFiltrada) {
 
-          let quantidade_local = novaListaFiltrada[i].medida === "Sacos" ? parseFloat(novaListaFiltrada[i].quantidade) : parseFloat(novaListaFiltrada[i].quantidade) * 60
+          let quantidade_local = novaListaFiltrada[i].medida === "Sacos" ? parseFloat(novaListaFiltrada[i].quantidade) : (parseFloat(novaListaFiltrada[i].quantidade) / 60)
           let valor_a_pagar = parseFloat(novaListaFiltrada[i].valor_a_pagar);
 
-          soma += quantidade_local;
-          valor += valor_a_pagar;
-          contador++;
+          if (novaListaFiltrada[i].status_contrato !== 4) {
+            soma += quantidade_local;
+            valor += valor_a_pagar;
+            contador++;
+          }
+
+          somaRecebida += parseFloat(novaListaFiltrada[i].total_recebido);
 
         }
         setQuantidade(soma);
+        setQuantidadeRecebida(somaRecebida);
         setValorTotal(valor);
         setQuantidadeCtrs(contador);
 
@@ -222,11 +242,6 @@ export default function Contratos() {
 
   }, [tipo]);
 
-
-
-  function currencyFormat(num) {
-    return 'R$ ' + parseFloat(num).toFixed(2).replace(/(\d)(?=(\d{3})+(?!\d))/g, '$1.')
-  }
 
 
 
@@ -263,20 +278,58 @@ export default function Contratos() {
             {contratosFiltrados.map((contrato) => (
               <Row key={contrato.id} row={contrato} />
             ))}
+          </TableBody>
+
+          <TableBody style={{position: "sticky", bottom: 0 }}>
             <TableRow>
-              <TableCell style={{ fontSize: 14, backgroundColor: 'green', color: 'white' , position: "sticky", bottom: 0}} colSpan={1}>Num CTRS:</TableCell>
-              <TableCell style={{ fontSize: 16, backgroundColor: 'green', color: 'white', position: "sticky", bottom: 0 }} colSpan={1} align="right"> {quantidade_ctrs} </TableCell>
+              <TableCell style={{ fontSize: 12, backgroundColor: 'green', color: 'white' }} colSpan={1}>Num CTRS:</TableCell>
+              <TableCell style={{ fontSize: 14, backgroundColor: 'green', color: 'white'}} colSpan={1} align="right"> {quantidade_ctrs} </TableCell>
 
-              <TableCell style={{ fontSize: 14, backgroundColor: 'black',color: 'white', position: "sticky", bottom: 0}} colSpan={5}> </TableCell>
-              <TableCell style={{ fontSize: 14, backgroundColor: 'green', color: 'white', position: "sticky", bottom: 0 }} colSpan={1}>Quantidade Total:</TableCell>
-              <TableCell style={{ fontSize: 18, backgroundColor: 'green', color: 'white', position: "sticky", bottom: 0 }} colSpan={2} align="right"> {quantidade} sacos </TableCell>
-              <TableCell style={{ fontSize: 14, backgroundColor: 'black',color: 'white', position: "sticky", bottom: 0}} colSpan={3}> </TableCell>
+              <TableCell style={{ fontSize: 0, backgroundColor: 'black', color: 'white' }} colSpan={4}> </TableCell>
+              <TableCell style={{ fontSize: 12, backgroundColor: 'green', color: 'white' }} colSpan={2}>Total Contratado:</TableCell>
+              <TableCell style={{ fontSize: 14, backgroundColor: 'green', color: 'white' }} colSpan={2} align="right"> {quantidade.toLocaleString('pt-BR', {
+                minimumFractionDigits: 3,
+                maximumFractionDigits: 3
+              })} sacos </TableCell>
+              <TableCell style={{ fontSize: 0, backgroundColor: 'black', color: 'white' }} colSpan={3}> </TableCell>
 
-              <TableCell style={{ fontSize: 14, backgroundColor: 'green', color: 'white' , position: "sticky", bottom: 0}} colSpan={1}>Valor Total:</TableCell>
-              <TableCell style={{ fontSize: 18, backgroundColor: 'green', color: 'white' , position: "sticky", bottom: 0}} colSpan={3} align="right"> {currencyFormat(valor_total)} </TableCell>
+              <TableCell style={{ fontSize: 12, backgroundColor: 'green', color: 'white' }} colSpan={1}>Valor Total:</TableCell>
+              <TableCell style={{ fontSize: 14, backgroundColor: 'green', color: 'white'}} colSpan={3} align="right"> {formatter.format(valor_total)} </TableCell>
 
             </TableRow>
+
+            <TableRow>
+              <TableCell style={{ fontSize: 0, backgroundColor: 'green', color: 'white' }} colSpan={1}></TableCell>
+              <TableCell style={{ fontSize: 0, backgroundColor: 'green', color: 'white' }} colSpan={1} align="right">  </TableCell>
+              <TableCell style={{ fontSize: 0, backgroundColor: 'black', color: 'white' }} colSpan={4}> </TableCell>
+              <TableCell style={{ fontSize: 12, backgroundColor: 'green', color: 'white' }} colSpan={2}>Quantidade Total Recebida:</TableCell>
+              <TableCell style={{ fontSize: 14, backgroundColor: 'green', color: 'white'}} colSpan={2} align="right"> {quantidadeRecebida.toLocaleString('pt-BR', {
+                minimumFractionDigits: 3,
+                maximumFractionDigits: 3
+              })} sacos </TableCell>
+              <TableCell style={{ fontSize: 0, backgroundColor: 'black', color: 'white' }} colSpan={3}> </TableCell>
+              <TableCell style={{ fontSize: 0, backgroundColor: 'green', color: 'white' }} colSpan={1}></TableCell>
+              <TableCell style={{ fontSize: 0, backgroundColor: 'green', color: 'white' }} colSpan={3}> </TableCell>
+            </TableRow>
+
+            <TableRow>
+              <TableCell style={{ fontSize: 0, backgroundColor: 'green', color: 'white'}} colSpan={1}></TableCell>
+              <TableCell style={{ fontSize: 0, backgroundColor: 'green', color: 'white'}} colSpan={1} align="right">  </TableCell>
+              <TableCell style={{ fontSize: 0, backgroundColor: 'black', color: 'white' }} colSpan={4}> </TableCell>
+              <TableCell style={{ fontSize: 12, backgroundColor: 'green', color: 'white' }} colSpan={2}>Quantidade a Receber:</TableCell>
+              <TableCell style={{ fontSize: 14, backgroundColor: 'green', color: 'white' }} colSpan={2} align="right"> {(quantidade - quantidadeRecebida).toLocaleString('pt-BR', {
+                minimumFractionDigits: 3,
+                maximumFractionDigits: 3
+              })} sacos </TableCell>
+              <TableCell style={{ fontSize: 0, backgroundColor: 'black', color: 'white' }} colSpan={3}> </TableCell>
+              <TableCell style={{ fontSize: 0, backgroundColor: 'green', color: 'white' }} colSpan={1}></TableCell>
+              <TableCell style={{ fontSize: 0, backgroundColor: 'green', color: 'white' }} colSpan={3}> </TableCell>
+            </TableRow>
+
           </TableBody>
+
+
+
         </Table>
       </TableContainer>
     );
@@ -386,13 +439,52 @@ export default function Contratos() {
 
           <TableCell colSpan={1} align="right">{row.safra.ano_plantio}/{row.safra.ano_colheita}</TableCell>
 
-          <TableCell colSpan={1} align="right">{currencyFormat(row.valor_produto)}</TableCell>
+          <TableCell colSpan={1} align="right">{formatter.format(row.valor_produto)}</TableCell>
 
-          <TableCell colSpan={1} align="right">{currencyFormat(row.valor_a_pagar)}</TableCell>
+          <TableCell colSpan={1} align="right">{formatter.format(row.valor_a_pagar)}</TableCell>
           <TableCell colSpan={1} align="right">{row.data_entrega}</TableCell>
           <TableCell colSpan={1} align="right">{row.data_pagamento}</TableCell>
 
 
+        </TableRow>
+        <TableRow>
+          <TableCell style={{ paddingBottom: 0, paddingTop: 0 }} colSpan={6}>
+            <Collapse in={open} timeout="auto" unmountOnExit>
+              <Box sx={{ margin: 1 }}>
+                <Paper elevation={3} style={{ margin: 10 }} >
+                  <Grid container spacing={1} style={{ padding: 10 }}>
+                    <Grid item xs={12}>
+
+                      <Typography >
+                        Informações do Contrato:
+                      </Typography>
+                      <Typography >
+                        {"--->"}Quantidade de Sacos Contratatos: {row.quantidade.toLocaleString('pt-BR', {
+                          minimumFractionDigits: 3,
+                          maximumFractionDigits: 3
+                        })} sacos
+                      </Typography>
+                      <Typography >
+                        {"--->"}Quantidade de Sacos Recebidos: {row.total_recebido.toLocaleString('pt-BR', {
+                          minimumFractionDigits: 3,
+                          maximumFractionDigits: 3
+                        })} sacos
+                      </Typography>
+                      <Typography >
+                        {"--->"}Quantidade de Sacos a Receber: {(row.quantidade - row.total_recebido).toLocaleString('pt-BR', {
+                          minimumFractionDigits: 3,
+                          maximumFractionDigits: 3
+                        })} sacos
+                      </Typography>
+                    </Grid>
+
+
+
+                  </Grid>
+                </Paper>
+              </Box>
+            </Collapse>
+          </TableCell>
         </TableRow>
 
       </React.Fragment>
@@ -429,18 +521,19 @@ export default function Contratos() {
 
     let novaListaFiltrada = novaLista.filter(
       item =>
-        (codigo !== "" && codigo !== null) ? item.codigo.includes(codigo) : 2 &&
-          (filtroCompradores !== "" && filtroCompradores !== null) ? item.nome_compradores.includes(filtroCompradores.toUpperCase()) : 2 &&
-            (filtroVendedores !== "" && filtroVendedores !== null) ? item.nome_vendedores.includes(filtroVendedores.toUpperCase()) : 2 &&
-              (produto !== "" && produto !== null) ? item.safra.produto.nome_produto.toUpperCase().includes(produto.toUpperCase()) : 2 &&
-                (transgenia !== "" && transgenia !== null) ? item.safra.produto.transgenia.toUpperCase().includes(transgenia.toUpperCase()) : 2 &&
-                  (safra !== "" && safra !== null) ? item.desc_safra.includes(safra) : 2
+        (safra !== "" && safra !== null) ? item.desc_safra.includes(safra) : 2 &&
+          (codigo !== "" && codigo !== null) ? item.codigo.includes(codigo) : 2 &&
+            (filtroCompradores !== "" && filtroCompradores !== null) ? item.nome_compradores.includes(filtroCompradores.toUpperCase()) : 2 &&
+              (filtroVendedores !== "" && filtroVendedores !== null) ? item.nome_vendedores.includes(filtroVendedores.toUpperCase()) : 2 &&
+                (produto !== "" && produto !== null) ? item.safra.produto.nome_produto.toUpperCase().includes(produto.toUpperCase()) : 2 &&
+                  (transgenia !== "" && transgenia !== null) ? item.safra.produto.transgenia.toUpperCase().includes(transgenia.toUpperCase()) : 2
     )
 
 
     setContratosFiltrados(novaListaFiltrada);
 
     let soma = 0;
+    let somaRecebida = 0;
     let valor = 0;
     let contador = 0;
     for (let i in novaListaFiltrada) {
@@ -448,12 +541,16 @@ export default function Contratos() {
       let quantidade_local = novaListaFiltrada[i].medida === "Sacos" ? parseFloat(novaListaFiltrada[i].quantidade) : parseFloat(novaListaFiltrada[i].quantidade) * 60
       let valor_a_pagar = parseFloat(novaListaFiltrada[i].valor_a_pagar);
 
-      soma += quantidade_local;
-      valor += valor_a_pagar;
-      contador++;
+      if (novaListaFiltrada[i].status_contrato !== 4) {
+        soma += quantidade_local;
+        valor += valor_a_pagar;
+        contador++;
+      }
 
+      somaRecebida += parseFloat(novaListaFiltrada[i].total_recebido);
     }
     setQuantidade(soma);
+    setQuantidadeRecebida(somaRecebida);
     setValorTotal(valor);
     setQuantidadeCtrs(contador);
 
@@ -479,7 +576,7 @@ export default function Contratos() {
   return (
     <div>
 
-     <NavBarAdmin />
+      <NavBarAdmin />
       <div className={classes.root} style={{ backgroundColor: '#DCDCDC' }}>
         {renderMenu()}
         <main className={classes.content}>

@@ -13,11 +13,12 @@ import './styles.scss';
 
 const InfoPatio = () => {
 
+  const [tipoMovimentacao, setTipoMovimentacao] = useState(-1);
   const [placa, setPlaca] = useState('');
   const [numVeiculosFrente, setNumVeiculosFrente] = useState(0);
   const [proximaPlaca, setProximaPlaca] = useState('');
   const [veiculoAnterior, setVeiculoAnterior] = useState('');
-
+  const [tempoEspera, setTempoEspera] = useState('');
   useEffect(() => {
 
 
@@ -27,7 +28,8 @@ const InfoPatio = () => {
 
   async function pesquisar() {
     try {
-      var response = await api.get('/v1/protected/infopatio/posicaoFila/' + placa);
+      var response = await api.get('/v1/protected/infopatio/posicaoFila/' + placa.toLocaleUpperCase());
+
       console.log("id " + response.data.id)
 
       var id = response.data.id;
@@ -36,30 +38,46 @@ const InfoPatio = () => {
         if (parseInt(id, 10) > 0) {
           console.log("Placa esta na fila");
 
+          var tipo_movimentacao = response.data.tipo_movimentacao
+
+          setTipoMovimentacao(tipo_movimentacao)
           try {
             //placa anterior
-            response = await api.get('/v1/protected/infopatio/veiculoAnterior/' + id);
-            console.log("proximo veiculo: " + response.data.placa)
-            setVeiculoAnterior(response.data.placa);
+            var response2 = await api.get('/v1/protected/infopatio/veiculoAnterior/' + id + "/" + tipo_movimentacao);
+            console.log("anterior veiculo: " + response2.data.placa)
+            setVeiculoAnterior(response2.data.placa);
           } catch (_err) {
+            setVeiculoAnterior("-----");
 
           }
 
 
           try {
             //proxima Placa
-            response = await api.get('/v1/protected/infopatio/proximoVeiculo/' + id);
-            console.log("proximo veiculo: " + response.data.placa)
-            setProximaPlaca(response.data.placa);
+            var response3 = await api.get('/v1/protected/infopatio/proximoVeiculo/' + id + "/" + tipo_movimentacao);
+            console.log("proximo veiculo: " + response3.data.placa)
+            setProximaPlaca(response3.data.placa);
           } catch (_err) {
+            setProximaPlaca("-----");
 
           }
 
           try {
             //numVeiculosFrente
-            response = await api.get('/v1/protected/infopatio/numVeiculosFrente/' + id);
-            console.log("numVeiculosFrente: " + response.data)
-            setNumVeiculosFrente(response.data);
+           var response4 = await api.get('/v1/protected/infopatio/numVeiculosFrente/' + id + "/" + tipo_movimentacao);
+            console.log("numVeiculosFrente: " + response4.data)
+            setNumVeiculosFrente(response4.data);
+          } catch (_err) {
+            setNumVeiculosFrente(0);
+
+          }
+
+
+          try {
+            //tempoEspera
+           var response5 = await api.get('/v1/protected/infopatio/tempo_espera/' + id + "/" + tipo_movimentacao);
+            console.log("tempoespera: " + response5.data)
+            setTempoEspera(response5.data);
           } catch (_err) {
 
           }
@@ -94,7 +112,7 @@ const InfoPatio = () => {
 
       }} >
 
-        <Navegador servicos={"underline"}/>
+        <Navegador servicos={"underline"} />
 
         <div style={{ height: 5, backgroundColor: '#808080' }}>
         </div>
@@ -267,6 +285,9 @@ const InfoPatio = () => {
                       </Button>
 
                       <Grid item xs={12} sm={12} md={12} lg={12} xl={12}   >
+                        <span style={{ fontSize: 22 }} >{ tipoMovimentacao === -1 ? "Placa Não Encontrada" : tipoMovimentacao === 0 ?  "Placa Encontrada Na Fila de Desembarque" : "Placa Encontrada Na Fila de Embarque"  } </span>
+                      </Grid>
+                      <Grid item xs={12} sm={12} md={12} lg={12} xl={12}   >
 
                         <span style={{ fontSize: 22 }} > Placa Anterior: </span>
                         <span style={{ fontWeight: 'bold', fontSize: 22, }} >{veiculoAnterior}</span>
@@ -276,12 +297,20 @@ const InfoPatio = () => {
                         <span style={{ fontWeight: 'bold', fontSize: 22, }} >{proximaPlaca}</span>
                         <br></br>
 
-
-
-
-
                         <span style={{ fontSize: 22 }} > Número de Veiculos na Frente: </span>
                         <span style={{ fontWeight: 'bold', fontSize: 22, }} >{numVeiculosFrente}</span>
+
+                        <br></br>
+
+                        <span style={{ fontSize: 22 }} > Tempo Médio de Espera(Média de 5 caminhões): </span>
+                        <span style={{ fontWeight: 'bold', fontSize: 22, }} >{tempoEspera.tempo_espera_por_unidade}</span>
+
+                        <br></br>
+                        <span style={{ fontSize: 22 }} > Hora de Encerramento: </span>
+                        <span style={{ fontWeight: 'bold', fontSize: 22, }} >{tempoEspera.hora_encerramento}</span>
+                        <br></br>
+                        <span style={{ fontSize: 22 }} > Previsão de Conclusão de Movimentação: </span>
+                        <span style={{ fontWeight: 'bold', fontSize: 22, }} >{tempoEspera.data_hora_prevista}</span>
                       </Grid>
 
                     </Grid>

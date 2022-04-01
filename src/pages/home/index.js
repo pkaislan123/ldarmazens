@@ -8,30 +8,65 @@ import Typography from '@material-ui/core/Typography';
 import Skeleton from '@material-ui/lab/Skeleton';
 import api from '../../services/api';
 import cereais from '../../assets/imgs/cereais.jpg'
+import moment from 'moment';
 import CountUp from 'react-countup';
 
 import contrato from '../../assets/imgs/contrato.jpeg'
 
-const Home = () => {
+const Home = (props) => {
 
 
   const [dadosStatus, setDadosStatus] = useState([]);
-
+  const [safrasAnoPassadoAnoAtual, setSafrasAnoPassadoAnoAtual] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [totalSacosBeneficiados, setTotalSacosBeneficiados] = useState(0)
 
 
   useEffect(() => {
 
 
+    async function listarNossosNumeros(totalSacosBeneficiados) {
+      try {
 
+        //listar safra ano_passado/ano_atual
+
+        const ano_atual = moment(new Date()).format("yyyy");
+        const ano_passado = parseInt(ano_atual) - 1;
+
+        console.log("ano passado: " + ano_passado)
+        console.log("ano atual " + ano_atual)
+
+
+        const response = await api.get('/v1/protected/safras/listar/' + ano_passado + "/" + ano_atual);
+
+        let safras = response.data;
+
+        let soma = 0
+        safras.map((safra) => {
+
+          soma += safra.total_recebido_safra
+          return safra;
+        })
+
+        setSafrasAnoPassadoAnoAtual(response.data)
+        setTotalSacosBeneficiados(soma);
+        setLoading(false);
+
+
+      } catch (_err) {
+        // avisar('Houve um problema com o login, verifique suas credenciais! ' + cpf + " " + senha );
+        console.log("Erro ao listar Safras ano passado/ano atual " + _err)
+
+      }
+    }
 
     async function listarStatus() {
       try {
 
         const response = await api.get('/v1/protected/statusarmazem/listar');
         setDadosStatus(response.data)
+        await listarNossosNumeros();
 
-        setLoading(false);
 
       } catch (_err) {
         // avisar('Houve um problema com o login, verifique suas credenciais! ' + cpf + " " + senha );
@@ -41,10 +76,21 @@ const Home = () => {
 
     }
 
+
+
     listarStatus();
 
-  }, []);
+  }, [props]);
 
+
+  function formatarNumeral(valor) {
+    let formatado = valor.toLocaleString('pt-BR', {
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0
+    });
+
+    return formatado;
+  }
 
 
   return (
@@ -393,7 +439,7 @@ const Home = () => {
             justifyContent="center"
             alignItems="center"
             item xs={12} sm={12} md={12} lg={12} xl={12}
-            style={{ paddingTop: 80, paddingBottom: 100 }}
+            style={{ paddingTop: 30, paddingBottom: 10 }}
           >
             <Grid item xs={12} sm={12} md={12} lg={12} xl={12} style={{ textAlign: "center" }} >
               <Typography component="h1" variant="h5" >
@@ -402,52 +448,103 @@ const Home = () => {
             </Grid>
 
 
-            <Grid item xs={12} sm={12} md={12} lg={12} xl={12}
+            <Grid
               container
               direction="row"
-              spacing={3}
+              justifyContent="center"
+              alignItems="center"
+              item xs={12} sm={12} md={12} lg={12} xl={12}
+              style={{ paddingTop: 1, paddingBottom: 1 }}
             >
+
 
               <Grid item xs={12} sm={12} md={12} lg={1} xl={1} >
               </Grid>
+
+
 
               <Grid
                 container
                 direction="row"
                 justifyContent="center"
                 alignItems="center"
-                item xs={12} sm={12} md={12} lg={12} xl={12}
+                item xs={12} sm={12} md={12} lg={10} xl={10}
+                style={{ paddingTop: 1, paddingBottom: 1 }}
               >
-
 
 
                 <Grid item xs={12} sm={12} md={12} lg={12} xl={12}
                   style={{ textAlign: 'center' }}
                 >
                   <Typography component="h1" variant="h5" >
-                 
+
                     <span style={{ fontWeight: 'bold', fontSize: 44 }}>
-                   
-                    <CountUp duration={2.75} start={0} end={1} /> milhão <CountUp duration={2.75} start={0} end={105} /> mil e  <CountUp duration={2.75} start={0} end={491} /> sacos
+
+                      <CountUp duration={3.5} start={0} end={totalSacosBeneficiados}
+                        decimals={3}
+                        decimal=","
+                        separator="."
+                      /> 
+                        
+                    </span>
+                    <span style={{ fontWeight: 'bold', fontSize: 44 }}>
+                    {" "} sacos
                     </span>
                     <br></br>
                     <span style={{ fontSize: 22 }}>
-                      beneficiados no ano de 2021 <br></br> nas safras de Soja, Milho e Sorgo
-
+                      beneficiados no ano de { moment(new Date()).format("yyyy")} <br></br> nas safras de Soja, Milho e Sorgo
+                      <br></br>
+                      sendo;
                     </span>
 
                   </Typography>
                 </Grid>
+                {safrasAnoPassadoAnoAtual.map((safra) => (
 
 
+                  <Grid
+                    key={safra.id_safra}
+                    container
+                    direction="row"
+                    justifyContent="center"
+                    alignItems="center"
+
+                    item xs={12} sm={12} md={12} lg={3} xl={3}
+                    style={{ paddingTop: 1, paddingBottom: 1, textAlign: 'center' }}
+                  >
+                    <img alt="img1" height={200} width={250} style={{ padding: 20 }}
+
+                      src={safra.produto.url_referencia}
+                    />
+
+                    <Grid item xs={12} sm={12} md={12} lg={12} xl={12} >
+                      <Typography component="h1" variant="h5" >
+                        <span style={{ fontSize: 18, fontWeight: 'bold', color: 'black' }}>
+                          {formatarNumeral(safra.total_recebido_safra)} sacos de {safra.produto.nome_produto}
+                        </span><br></br> <br></br>
+                      </Typography>
+                    </Grid>
+
+
+
+
+                  </Grid>
+
+
+                ))}
               </Grid>
-
-
 
 
               <Grid item xs={12} sm={12} md={12} lg={1} xl={1} >
               </Grid>
+
+
             </Grid>
+
+
+
+
+
 
           </Grid>
         </div>

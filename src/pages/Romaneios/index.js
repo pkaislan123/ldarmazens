@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState,useEffect } from 'react';
 import { makeStyles } from '@material-ui/core/styles';
-import TextField from '@material-ui/core/TextField';
+import { TextField, Select, MenuItem, InputLabel, Button } from '@material-ui/core';
 
 import Cookies from 'js-cookie';
 import api from '../../services/api';
@@ -19,7 +19,7 @@ import IconButton from '@material-ui/core/IconButton';
 import Paper from '@material-ui/core/Paper';
 import KeyboardArrowDownIcon from '@material-ui/icons/KeyboardArrowDown'
 import KeyboardArrowUpIcon from '@material-ui/icons/KeyboardArrowUp';
-import Button from '@material-ui/core/Button';
+import Pagination from '@material-ui/lab/Pagination';
 
 
 const drawerWidth = 240;
@@ -108,31 +108,56 @@ const useStyles = makeStyles((theme) => ({
 
 export default function Romaneios() {
   const classes = useStyles();
-  const [romaneiosFiltrados, setRomaneiosFiltrados] = useState([]);
-  const [romaneiosOriginais, setRomaneiosOriginais] = useState([]);
-
-
-
-
-
+  const [romaneios, setRomaneios] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [click, setClick] = useState(1);
+  
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(0);
+  const [totalElements, setTotalElements] = useState(0);
+  const [parametros, setParametros] = useState(
+    {
+      identificacao: "",
+      page: 0,
+      size: 25,
+      codigo: "",
+      produto: "",
+      motorista: "",
+      placa: "",
+      operacao: "",
+      safra: "",
+      remetente: "",
+      destinatario: "",
 
-  const [codigo, setCodigo] = useState('');
-  const [produto, setProduto] = useState('');
-  const [motorista, setMotorista] = useState('');
-  const [placa, setPlaca] = useState('');
-
-  const [operacao, setOperacao] = useState('');
-
-  const [filtroRemetente, setfiltroRemetente] = useState('');
-  const [filtroDestinatario, setfiltroDestinatario] = useState('');
-  const [safra, setSafra] = useState('');
-
+    }
+  );
 
 
   const [height, setHeight] = useState(0);
 
+  const handleChangePage = (event, value) => {
+   
+    setPage(value);
+    let num_pagina = parseInt(value) - 1;
+    console.log("numero da pagina: " + num_pagina)
+    setParametros(prevState => ({ ...prevState, 'page': num_pagina }))
+    setClick(click +  1)
 
+  };
+
+  
+  const handleRowElementsPorPage = (e) =>{
+
+    setParametros(prevState => ({ ...prevState, [e.target.name]: e.target.value }))
+    setClick(click +  1)
+
+  }
+
+
+ const handleClick = () =>{
+   setClick(click +  1)
+ }
+ 
   function checkDimenssoes() {
 
     var altura = window.innerHeight
@@ -149,10 +174,12 @@ export default function Romaneios() {
   });
 
 
-  
+
   useEffect(() => {
 
-    async function listarMeusDados() {
+    
+
+    async function listarMeusDados(parametros) {
       try {
         setLoading(true);
         var dados = [];
@@ -177,16 +204,36 @@ export default function Romaneios() {
 
         });
 
-        var url = "v1/protected/romaneios/";
+        var url = "v1/protected/romaneiosPaginados/";
 
         var identificacao = dados.tipo_cliente === 0 ? dados.cpf : dados.cnpj;
-        await api.get(url + identificacao , {
+        await api.get(url, {
+          params: {
+            identificacao: identificacao,
+            page: parametros.page,
+            size: parametros.size,
+            codigo: parametros.codigo,
+            produto: parametros.produto,
+            motorista: parametros.motorista,
+            placa: parametros.placa,
+            operacao: parametros.operacao,
+            safra: parametros.safra,
+            remetente: parametros.remetente,
+            destinatario: parametros.destinatario,
+
+          },
           headers: headers
         }).then(function (response) {
-          setRomaneiosFiltrados(response.data)
-          setRomaneiosOriginais(response.data)
-          console.log(" Meus Romaneios: " + response.data);
+          setRomaneios(response.data.content)
+         // console.log(" Meus Romaneios: " + response.data.content);
 
+          setTotalElements(response.data.totalElements);
+          setTotalPages(response.data.totalPages);
+
+          console.log(" total de elementos: " + response.data.totalElements);
+
+
+          console.log(" total de paginas: " + response.data.totalPages);
 
           setLoading(false);
 
@@ -208,7 +255,7 @@ export default function Romaneios() {
     listarMeusDados();
 
 
-  }, []);
+  }, [click]);
 
 
   function Row(props) {
@@ -299,7 +346,7 @@ export default function Romaneios() {
             </TableRow>
           </TableHead>
           <TableBody>
-            {romaneiosFiltrados.map((romaneio) => (
+            {romaneios.map((romaneio) => (
               <Row key={romaneio.id} row={romaneio} />
             ))}
           </TableBody>
@@ -309,49 +356,7 @@ export default function Romaneios() {
     );
   }
 
-  function filtrar() {
 
-
-    let arraybkp = romaneiosOriginais;
-
-    let novaLista = arraybkp.map((romaneio) => {
-      var remetente = romaneio.remetente.tipo_cliente === 0 ? romaneio.remetente.nome_empresarial : romaneio.remetente.razao_social
-
-      romaneio['nome_remetente'] = remetente.toUpperCase()
-
-      var destinatario = romaneio.destinatario !== null ? romaneio.destinatario.tipo_cliente === 0 ? romaneio.destinatario.nome_empresarial : romaneio.destinatario.razao_social : ""
-
-      romaneio['nome_destinatario'] = destinatario.toUpperCase()
-
-      var produto = romaneio.safra.produto.nome_produto.toUpperCase();
-
-      romaneio['nome_produto'] = produto;
-
-      var desc_safra = romaneio.safra.ano_plantio + "/" + romaneio.safra.ano_colheita
-      romaneio['desc_safra'] = desc_safra
-
-      return romaneio;
-
-    })
-
-    let novaListaFiltrada = novaLista.filter(
-      item =>
-        (filtroRemetente !== "" && filtroRemetente !== null) ? item.nome_remetente.includes(filtroRemetente.toUpperCase()) : 2 &&
-          (filtroDestinatario !== "" && filtroDestinatario !== null) ? item.nome_destinatario.includes(filtroDestinatario.toUpperCase()) : 2 &&
-            (produto !== "" && produto !== null) ? item.nome_produto.includes(produto.toUpperCase()) : 2 &&
-              (safra !== "" && safra !== null) ? item.desc_safra.includes(safra) : 2 &&
-                (motorista !== "" && safra !== motorista) ? item.nome_motorista.includes(motorista.toUpperCase()) : 2 &&
-                  (placa !== "" && placa !== null) ? item.placa.includes(placa.toUpperCase()) : 2 &&
-                    (operacao !== "" && operacao !== null) ? item.operacao.includes(operacao.toUpperCase()) : 2
-
-    )
-
-
-    setRomaneiosFiltrados(novaListaFiltrada);
-
-
-
-  }
 
 
   return (
@@ -379,8 +384,8 @@ export default function Romaneios() {
                   name="codigo"
                   label="Código"
                   id="codigo"
-                  value={codigo}
-                  onChange={e => setCodigo(e.target.value)}
+                  value={parametros.codigo}
+                  onChange={e => setParametros(prevState => ({ ...prevState, [e.target.name]: e.target.value }))}
                   fullWidth
                 />
               </Grid>
@@ -391,8 +396,8 @@ export default function Romaneios() {
                   name="operacao"
                   label="Operação"
                   id="operacao"
-                  value={operacao}
-                  onChange={e => setOperacao(e.target.value)}
+                  value={parametros.operacao}
+                  onChange={e => setParametros(prevState => ({ ...prevState, [e.target.name]: e.target.value }))}
                   fullWidth
                 />
               </Grid>
@@ -403,8 +408,9 @@ export default function Romaneios() {
                   name="remetente"
                   label="Remetente"
                   id="remetente"
-                  value={filtroRemetente}
-                  onChange={e => setfiltroRemetente(e.target.value.toUpperCase())}
+                  onChange={e => setParametros(prevState => ({ ...prevState, [e.target.name]: e.target.value }))}
+                  value={parametros.remetente}
+
                   fullWidth
                 />
               </Grid>
@@ -415,8 +421,9 @@ export default function Romaneios() {
                   name="destinatario"
                   label="Destinatario"
                   id="destinatario"
-                  value={filtroDestinatario}
-                  onChange={e => setfiltroDestinatario(e.target.value.toUpperCase())}
+                  value={parametros.destinatario}
+                  onChange={e => setParametros(prevState => ({ ...prevState, [e.target.name]: e.target.value }))}
+
                   fullWidth
                 />
               </Grid>
@@ -429,8 +436,8 @@ export default function Romaneios() {
                   name="produto"
                   label="Produto"
                   id="produto"
-                  value={produto}
-                  onChange={e => setProduto(e.target.value.toUpperCase())}
+                  value={parametros.produto}
+                  onChange={e => setParametros(prevState => ({ ...prevState, [e.target.name]: e.target.value }))}
                   fullWidth
                 />
               </Grid>
@@ -441,8 +448,8 @@ export default function Romaneios() {
                   name="safra"
                   label="Safra"
                   id="safra"
-                  value={safra}
-                  onChange={e => setSafra(e.target.value)}
+                  value={parametros.safra}
+                  onChange={e => setParametros(prevState => ({ ...prevState, [e.target.name]: e.target.value }))}
                   fullWidth
                 />
               </Grid>
@@ -453,8 +460,8 @@ export default function Romaneios() {
                   name="motorista"
                   label="Motorista"
                   id="motorista"
-                  value={motorista}
-                  onChange={e => setMotorista(e.target.value)}
+                  value={parametros.motorista}
+                  onChange={e => setParametros(prevState => ({ ...prevState, [e.target.name]: e.target.value }))}
                   fullWidth
                 />
               </Grid>
@@ -465,23 +472,20 @@ export default function Romaneios() {
                   name="placa"
                   label="Placa"
                   id="placa"
-                  value={placa}
-                  onChange={e => setPlaca(e.target.value)}
+                  value={parametros.placa}
+                  onChange={e => setParametros(prevState => ({ ...prevState, [e.target.name]: e.target.value }))}
                   fullWidth
                 />
               </Grid>
 
-
-
-
-              <Grid item xs={1} >
-
+              <Grid item xs={1} style={{ padding: 10 }}>
                 <Button
-                  variant="contained"
-                  color="primary"
-                  onClick={filtrar}
-                > filtrar  </Button>
-
+                 onClick={handleClick}
+                 color="secondary"
+                 variant="contained"
+                >
+                  Filtrar
+                </Button>
               </Grid>
 
 
@@ -493,8 +497,67 @@ export default function Romaneios() {
               <Skeleton animation={"wave"} width={'100%'} style={{ backgroundColor: '#48D1CC' }}>
               </Skeleton>
               :
+              <div>
                 <CollapsibleTable></CollapsibleTable>
+                <Grid
+                  direction="row"
+                  item xs={12} sm={12} md={12} lg={12} xl={12}
+                  justifyContent="center"
+                  alignItems="center"
+                  style={{ padding: 10 }}
+                  container
+                >
 
+                  <Grid
+                    item xs={12} sm={12} md={12} lg={12} xl={12}
+                    direction="column"
+                    container
+                    justifyContent="center"
+                    alignItems="center"
+                    style={{padding :20}}
+                  >
+
+                    <span style={{fontWeight: 'bold', fontSize: 14}}> {totalElements} romaneos encontrados   </span> 
+
+                    <InputLabel id="size">Elementos por página:</InputLabel>
+                    <Select
+                      labelId="size"
+                      id="size"
+                      value={parametros.size}
+                      name="size"
+                      onChange={e => handleRowElementsPorPage(e)}
+                      label="size"
+                      style={{ paddingLeft: 5 }}
+                    >
+                      <MenuItem value={10} >10</MenuItem>
+                      <MenuItem value={25}>20</MenuItem>
+                      <MenuItem value={50}>50</MenuItem>
+                      <MenuItem value={100}>100</MenuItem>
+                      <MenuItem value={100}>2000</MenuItem>
+
+                    </Select>
+                  </Grid>
+                  <Grid
+                    item xs={12} sm={12} md={12} lg={12} xl={12}
+                    direction="column"
+                    container
+                    justifyContent="center"
+                    alignItems="center"
+                  >
+                    <Pagination
+                      count={totalPages}
+                      page={page}
+                      onChange={handleChangePage}
+                      variant="outlined" 
+                      size="large"
+                      color="primary"
+                      />
+
+                  </Grid>
+
+                </Grid>
+
+              </div>
             }
           </div>
 

@@ -9,7 +9,15 @@ import Grid from '@material-ui/core/Grid';
 import Paper from '@material-ui/core/Paper';
 import moment from 'moment';
 import Divider from "@material-ui/core/Divider";
-
+import {
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend
+} from 'recharts';
 
 const Cotacoes = () => {
 
@@ -18,15 +26,10 @@ const Cotacoes = () => {
   const [produtos, setProdutos] = useState([]);
 
 
-  function currencyFormat(num) {
-    return 'R$ ' + num.toFixed(2).replace(/(\d)(?=(\d{3})+(?!\d))/g, '$1,')
-  }
-
   function formatData(data) {
     var dataCtr = moment(data, "YYYY-MM-DD hh:mm");
     return dataCtr.format("DD/MM/YYYY HH:mm")
   }
-
 
 
 
@@ -39,7 +42,42 @@ const Cotacoes = () => {
         const response = await api.get('/v1/protected/produtos/listar');
         console.log("Produtos" + response.data)
 
-        setProdutos(response.data)
+        let produtos = response.data;
+
+        let nova_lista = produtos.map((produto => {
+
+          let cotacoes = produto.cotacoes;
+          let novas_cotacoes = [];
+          var contador = false;
+          for (var i = 0; i < cotacoes.length; i++) {
+            if (contador < 3) {
+
+              novas_cotacoes.push(cotacoes[i]);
+              contador++;
+            } else {
+              break;
+            }
+          }
+
+          function compare(a, b) {
+            if (a.data_hora < b.data_hora) {
+              return -1;
+            }
+            if (a.data_hora > b.data_hora) {
+              return 1;
+            }
+            return 0;
+          }
+
+          cotacoes.sort(compare);
+
+          produto['cotacoes_originais'] = cotacoes;
+          produto.cotacoes = novas_cotacoes;
+
+          return produto;
+        }))
+
+        setProdutos(nova_lista)
         setLoading(false);
 
       } catch (_err) {
@@ -56,7 +94,12 @@ const Cotacoes = () => {
   }, []);
 
 
+  var formatter = new Intl.NumberFormat('pt-BR', {
+    style: 'currency',
+    currency: 'BRL',
 
+
+  });
 
   const ProdutoItem = ({ props }) => {
     return (
@@ -130,46 +173,46 @@ const Cotacoes = () => {
                 </Grid>
               </Grid>
 
-            
-                {
-                  props.cotacoes.map((props) => (
+
+              {
+                props.cotacoes.map((props) => (
 
 
-                    <Grid key={props.id_cotacao} container item xs={12} sm={12} md={12} lg={12} xl={12} direction="row"
-                      style={{ textAlign: 'center'}}>
+                  <Grid key={props.id_cotacao} container item xs={12} sm={12} md={12} lg={12} xl={12} direction="row"
+                    style={{ textAlign: 'center' }}>
 
-                      <Grid item xs={12} sm={12} md={12} lg={1} xl={1} >
-                        <span style={{ fontSize: 16 }} >{props.medida}</span>
-
-                      </Grid>
-                      <Grid item xs={12} sm={12} md={12} lg={2} xl={2} >
-                        <span style={{ fontSize: 16, }} >{props.quantidade}</span>
-                      </Grid>
-
-                      <Grid item xs={12} sm={12} md={12} lg={2} xl={2} >
-                        <span style={{ fontSize: 16, }} >{props.unidade}</span>
-                      </Grid>
-
-                      <Grid item xs={12} sm={12} md={12} lg={2} xl={2} >
-                        <span style={{ fontSize: 16, }} >{currencyFormat(props.valor)}</span>
-                      </Grid>
-
-                      <Grid item xs={12} sm={12} md={12} lg={2} xl={2} >
-                        <span style={{ fontSize: 16, }} >{formatData(props.data_hora)}</span>
-                      </Grid>
-
-                      <Grid item xs={12} sm={12} md={12} lg={3} xl={3} >
-                        <span style={{ fontSize: 16, }} >{props.localidade} - {props.indicador}</span>
-                      </Grid>
-
-                      <Grid item xs={12} sm={12} md={12} lg={12} xl={12} >
-                        <Divider style={{ color: 'black', backgroundColor: 'black', width: '100%', height: 3 }} />
-                      </Grid>
+                    <Grid item xs={12} sm={12} md={12} lg={1} xl={1} >
+                      <span style={{ fontSize: 16 }} >{props.medida}</span>
 
                     </Grid>
-                  ))
-                }
-         
+                    <Grid item xs={12} sm={12} md={12} lg={2} xl={2} >
+                      <span style={{ fontSize: 16, }} >{props.quantidade}</span>
+                    </Grid>
+
+                    <Grid item xs={12} sm={12} md={12} lg={2} xl={2} >
+                      <span style={{ fontSize: 16, }} >{props.unidade}</span>
+                    </Grid>
+
+                    <Grid item xs={12} sm={12} md={12} lg={2} xl={2} >
+                      <span style={{ fontSize: 16, }} >{formatter.format(props.valor)}</span>
+                    </Grid>
+
+                    <Grid item xs={12} sm={12} md={12} lg={2} xl={2} >
+                      <span style={{ fontSize: 16, }} >{formatData(props.data_hora)}</span>
+                    </Grid>
+
+                    <Grid item xs={12} sm={12} md={12} lg={3} xl={3} >
+                      <span style={{ fontSize: 16, }} >{props.localidade} - {props.indicador}</span>
+                    </Grid>
+
+                    <Grid item xs={12} sm={12} md={12} lg={12} xl={12} >
+                      <Divider style={{ color: 'black', backgroundColor: 'black', width: '100%', height: 3 }} />
+                    </Grid>
+
+                  </Grid>
+                ))
+              }
+
             </Grid>
 
 
@@ -194,7 +237,7 @@ const Cotacoes = () => {
 
       }} >
 
-        <Navegador servicos={"underline"}/>
+        <Navegador servicos={"underline"} />
 
         <div style={{ height: 5, backgroundColor: '#808080' }}>
         </div>
@@ -222,8 +265,41 @@ const Cotacoes = () => {
 
             {
               produtos.map((produto) => (
-                <ProdutoItem props={produto} key={produto.id_produto} />
+                <div>
+                  <ProdutoItem props={produto} key={produto.id_produto} />
+                  <Grid
+                    container
+                    item xs={12} sm={12} md={12} lg={12} xl={12}
+                    direction="row" 
+                    justifyContent="center"
+                    alignItems="center"
+                    >
+                    <LineChart
+                      width={600}
+                      height={300}
+                      data={produto.cotacoes_originais.map((cotacao => {
 
+                        cotacao['name'] = formatData(cotacao.data_hora)
+                        cotacao['Valor'] = cotacao.valor
+                        cotacao['amt'] = cotacao.valor
+                        return cotacao;
+                      }))}
+                      margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
+                    >
+                      <Line
+                        type='monotone'
+                        dataKey={'valor'}
+                        stroke='#8884d8'
+                        activeDot={{ r: 8 }}
+                      />
+                      <CartesianGrid strokeDasharray='3 3' />
+                      <Tooltip />
+                      <YAxis />
+                      <XAxis dataKey='name' />
+                      <Legend />
+                    </LineChart>
+                  </Grid>
+                </div>
               ))
             }
 
