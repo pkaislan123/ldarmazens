@@ -311,6 +311,10 @@ const InfoPatio = () => {
                         <br></br>
                         <span style={{ fontSize: 22 }} > Previsão de Conclusão de Movimentação: </span>
                         <span style={{ fontWeight: 'bold', fontSize: 22, }} >{tempoEspera.data_hora_prevista}</span>
+
+                        <br></br>
+                        <span style={{ fontSize: 22 }} > Observação: </span>
+                        <span style={{ fontWeight: 'bold', fontSize: 22, }} >{tempoEspera.observacao}</span>
                       </Grid>
 
                     </Grid>
