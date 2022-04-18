@@ -179,7 +179,7 @@ export default function Romaneios() {
 
     
 
-    async function listarMeusDados(parametros) {
+    async function listarMeusDados() {
       try {
         setLoading(true);
         var dados = [];
@@ -243,7 +243,7 @@ export default function Romaneios() {
 
       } catch (_err) {
         // avisar('Houve um problema com o login, verifique suas credenciais! ' + cpf + " " + senha );
-        console.log("Erro ao listar seus dados: " + _err)
+        console.log("Erro ao listar seus romaneios: " + _err)
 
       }
 

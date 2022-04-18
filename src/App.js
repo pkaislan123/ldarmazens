@@ -133,7 +133,9 @@ function App() {
       <PublicRoute restricted={false} component={Home} path="/" exact />
       <PublicRoute restricted={false} component={Localizacao} path="/localizacao" exact />
       <PublicRoute restricted={false} component={About} path="/sobre" exact />
-      <PublicRoute restricted={false} component={Blog} path="/noticias" exact />
+      <PublicRoute restricted={false} component={Blog} path="/noticias/:categoria" exact />
+      <PublicRoute restricted={false} component={Blog} path="/noticias/" exact />
+
       <PublicRoute restricted={false} component={Contato} path="/contato" exact />
       <PublicRoute restricted={false} component={LGPD} path="/lgpd" exact />
       <PublicRoute restricted={false} component={Cotacoes} path="/cotacoes" exact />
