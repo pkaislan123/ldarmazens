@@ -156,6 +156,7 @@ export default function Romaneios() {
 
  const handleClick = () =>{
    setClick(click +  1)
+   listarMeusDados();
  }
  
   function checkDimenssoes() {
@@ -174,88 +175,159 @@ export default function Romaneios() {
   });
 
 
+  async function listarMeusDados() {
+    try {
+      setLoading(true);
+      var dados = [];
+
+      const token = Cookies.get('token');
+
+      const headers = {
+        'Authorization': 'Bearer ' + token
+      }
+
+
+      const id_usuario = Cookies.get('id_usuario');
+      console.log("id na tela de romaneios: " + id_usuario)
+
+      await api.get("v1/protected/retornardadoscliente/" + id_usuario, {
+        headers: headers
+      }).then(function (response) {
+        dados = response.data
+        console.log(" Meus Dados: " + response);
+
+
+
+      });
+
+      var url = "v1/protected/romaneiosPaginados/";
+      var parametros1 = parametros
+
+      console.log("page: " + parametros1.page)
+
+      var identificacao = dados.tipo_cliente === 0 ? dados.cpf : dados.cnpj;
+      await api.get(url, {
+        params: {
+          identificacao: identificacao,
+          page: parametros1.page,
+          size: parametros1.size,
+          codigo: parametros1.codigo,
+          produto: parametros1.produto,
+          motorista: parametros1.motorista,
+          placa: parametros1.placa,
+          operacao: parametros1.operacao,
+          safra: parametros1.safra,
+          remetente: parametros1.remetente,
+          destinatario: parametros1.destinatario,
+
+        },
+        headers: headers
+      }).then(function (response) {
+        setRomaneios(response.data.content)
+       // console.log(" Meus Romaneios: " + response.data.content);
+
+        setTotalElements(response.data.totalElements);
+        setTotalPages(response.data.totalPages);
+
+        console.log(" total de elementos: " + response.data.totalElements);
+
+
+        console.log(" total de paginas: " + response.data.totalPages);
+
+        setLoading(false);
+
+      });
+
+
+
+    } catch (_err) {
+      // avisar('Houve um problema com o login, verifique suas credenciais! ' + cpf + " " + senha );
+      console.log("Erro ao listar seus romaneios: " + _err)
+
+    }
+
+  }
+
 
   useEffect(() => {
 
     
+    checkDimenssoes();
 
     async function listarMeusDados() {
       try {
         setLoading(true);
         var dados = [];
-
+  
         const token = Cookies.get('token');
-
+  
         const headers = {
           'Authorization': 'Bearer ' + token
         }
-
-
+  
+  
         const id_usuario = Cookies.get('id_usuario');
         console.log("id na tela de romaneios: " + id_usuario)
-
+  
         await api.get("v1/protected/retornardadoscliente/" + id_usuario, {
           headers: headers
         }).then(function (response) {
           dados = response.data
           console.log(" Meus Dados: " + response);
-
-
-
+  
+  
+  
         });
-
+  
         var url = "v1/protected/romaneiosPaginados/";
-
+  
+  
         var identificacao = dados.tipo_cliente === 0 ? dados.cpf : dados.cnpj;
         await api.get(url, {
           params: {
             identificacao: identificacao,
-            page: parametros.page,
-            size: parametros.size,
-            codigo: parametros.codigo,
-            produto: parametros.produto,
-            motorista: parametros.motorista,
-            placa: parametros.placa,
-            operacao: parametros.operacao,
-            safra: parametros.safra,
-            remetente: parametros.remetente,
-            destinatario: parametros.destinatario,
-
+            page: 0,
+            size: 25,
+            codigo: "",
+            produto:  "",
+            motorista:  "",
+            placa:  "",
+            operacao:  "",
+            safra: "",
+            remetente:  "",
+            destinatario:  "",
+  
           },
           headers: headers
         }).then(function (response) {
           setRomaneios(response.data.content)
          // console.log(" Meus Romaneios: " + response.data.content);
-
+  
           setTotalElements(response.data.totalElements);
           setTotalPages(response.data.totalPages);
-
+  
           console.log(" total de elementos: " + response.data.totalElements);
-
-
+  
+  
           console.log(" total de paginas: " + response.data.totalPages);
-
+  
           setLoading(false);
-
+  
         });
-
-
-
+  
+  
+  
       } catch (_err) {
         // avisar('Houve um problema com o login, verifique suas credenciais! ' + cpf + " " + senha );
         console.log("Erro ao listar seus romaneios: " + _err)
-
+  
       }
-
+  
     }
-
-
-    checkDimenssoes();
 
     listarMeusDados();
 
-
-  }, [click]);
+  }, []);
 
 
   function Row(props) {
