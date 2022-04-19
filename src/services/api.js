@@ -7,7 +7,7 @@ import axios from 'axios';
 */
 const api = axios.create({
   baseURL: 'https://titaniwm124-60046.portmap.io:443',
- // baseURL: 'http://localhost:8080',
+  //baseURL: 'http://localhost:8080',
 });
 
 //baseURL: 'http://aislanldarmazens-64531.portmap.io:64531'

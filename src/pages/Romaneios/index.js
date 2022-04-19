@@ -1,4 +1,4 @@
-import React, { useState,useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { makeStyles } from '@material-ui/core/styles';
 import { TextField, Select, MenuItem, InputLabel, Button } from '@material-ui/core';
 
@@ -15,10 +15,7 @@ import TableCell from '@material-ui/core/TableCell';
 import TableContainer from '@material-ui/core/TableContainer';
 import TableHead from '@material-ui/core/TableHead';
 import TableRow from '@material-ui/core/TableRow';
-import IconButton from '@material-ui/core/IconButton';
 import Paper from '@material-ui/core/Paper';
-import KeyboardArrowDownIcon from '@material-ui/icons/KeyboardArrowDown'
-import KeyboardArrowUpIcon from '@material-ui/icons/KeyboardArrowUp';
 import Pagination from '@material-ui/lab/Pagination';
 
 
@@ -111,7 +108,7 @@ export default function Romaneios() {
   const [romaneios, setRomaneios] = useState([]);
   const [loading, setLoading] = useState(true);
   const [click, setClick] = useState(1);
-  
+
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(0);
   const [totalElements, setTotalElements] = useState(0);
@@ -136,29 +133,29 @@ export default function Romaneios() {
   const [height, setHeight] = useState(0);
 
   const handleChangePage = (event, value) => {
-   
+
     setPage(value);
     let num_pagina = parseInt(value) - 1;
     console.log("numero da pagina: " + num_pagina)
     setParametros(prevState => ({ ...prevState, 'page': num_pagina }))
-    setClick(click +  1)
+    setClick(click + 1)
 
   };
 
-  
-  const handleRowElementsPorPage = (e) =>{
+
+  const handleRowElementsPorPage = (e) => {
 
     setParametros(prevState => ({ ...prevState, [e.target.name]: e.target.value }))
-    setClick(click +  1)
+    setClick(click + 1)
 
   }
 
 
- const handleClick = () =>{
-   setClick(click +  1)
-   listarMeusDados();
- }
- 
+  const handleClick = () => {
+    setClick(click + 1)
+    listarMeusDados();
+  }
+
   function checkDimenssoes() {
 
     var altura = window.innerHeight
@@ -224,7 +221,7 @@ export default function Romaneios() {
         headers: headers
       }).then(function (response) {
         setRomaneios(response.data.content)
-       // console.log(" Meus Romaneios: " + response.data.content);
+        // console.log(" Meus Romaneios: " + response.data.content);
 
         setTotalElements(response.data.totalElements);
         setTotalPages(response.data.totalPages);
@@ -251,37 +248,37 @@ export default function Romaneios() {
 
   useEffect(() => {
 
-    
+
     checkDimenssoes();
 
     async function listarMeusDados() {
       try {
         setLoading(true);
         var dados = [];
-  
+
         const token = Cookies.get('token');
-  
+
         const headers = {
           'Authorization': 'Bearer ' + token
         }
-  
-  
+
+
         const id_usuario = Cookies.get('id_usuario');
         console.log("id na tela de romaneios: " + id_usuario)
-  
+
         await api.get("v1/protected/retornardadoscliente/" + id_usuario, {
           headers: headers
         }).then(function (response) {
           dados = response.data
           console.log(" Meus Dados: " + response);
-  
-  
-  
+
+
+
         });
-  
+
         var url = "v1/protected/romaneiosPaginados/";
-  
-  
+
+
         var identificacao = dados.tipo_cliente === 0 ? dados.cpf : dados.cnpj;
         await api.get(url, {
           params: {
@@ -289,72 +286,107 @@ export default function Romaneios() {
             page: 0,
             size: 25,
             codigo: "",
-            produto:  "",
-            motorista:  "",
-            placa:  "",
-            operacao:  "",
+            produto: "",
+            motorista: "",
+            placa: "",
+            operacao: "",
             safra: "",
-            remetente:  "",
-            destinatario:  "",
-  
+            remetente: "",
+            destinatario: "",
+
           },
           headers: headers
         }).then(function (response) {
           setRomaneios(response.data.content)
-         // console.log(" Meus Romaneios: " + response.data.content);
-  
+          // console.log(" Meus Romaneios: " + response.data.content);
+
           setTotalElements(response.data.totalElements);
           setTotalPages(response.data.totalPages);
-  
+
           console.log(" total de elementos: " + response.data.totalElements);
-  
-  
+
+
           console.log(" total de paginas: " + response.data.totalPages);
-  
+
           setLoading(false);
-  
+
         });
-  
-  
-  
+
+
+
       } catch (_err) {
         // avisar('Houve um problema com o login, verifique suas credenciais! ' + cpf + " " + senha );
         console.log("Erro ao listar seus romaneios: " + _err)
-  
+
       }
-  
+
     }
 
     listarMeusDados();
 
   }, []);
 
+  const baixar = (url) => {
+    baixarArquivo(url);
+  }
+
+
+
+  async function baixarArquivo(url, codigo) {
+    try {
+
+      const token = Cookies.get('token');
+
+      const headers = {
+        'Authorization': 'Bearer ' + token
+      }
+
+
+      url = url.replaceAll(" ", ";");
+      url = url.replaceAll("\\", "@");
+
+      const id_usuario = Cookies.get('id_usuario');
+      console.log("id na tela de romaneios: " + id_usuario)
+
+      await api.get("v1/protected/nuvem/baixar", {
+        params: {
+          urlarquivo: url,
+        },
+        headers: headers
+      }).then(function (response) {
+        console.log("url de download" + response.data);
+        window.open(response.data, '_blank');
+
+      });
+
+    } catch (_err) {
+      // avisar('Houve um problema com o login, verifique suas credenciais! ' + cpf + " " + senha );
+      console.log("Erro ao tentar donwload " + _err)
+
+    }
+
+  }
+
+
 
   function Row(props) {
     const { row } = props;
-    const [open, setOpen] = React.useState(false);
-
-
-    function setOpenInfoExtra(open) {
-      setOpen(open);
-    }
-
-
 
 
     return (
       <React.Fragment>
         <TableRow sx={{ '& > *': { borderBottom: 'unset' } }}>
-          <TableCell>
-            <IconButton
-              aria-label="expand row"
-              size="small"
-              onClick={() => setOpenInfoExtra(!open)}
-            >
-              {open ? <KeyboardArrowUpIcon /> : <KeyboardArrowDownIcon />}
-            </IconButton>
-          </TableCell>
+          
+          <TableCell colSpan={1} align="right">
 
+              <Button
+              onClick={()=>{baixar(row.caminho_arquivo, row.codigo)}}
+              color="secondary"
+                variant="contained"
+              >
+                Baixar
+              </Button>
+          </TableCell>
 
           <TableCell colSpan={1} align="right">{row.id}</TableCell>
           <TableCell colSpan={1} align="right">{row.codigo}</TableCell>
@@ -552,9 +584,9 @@ export default function Romaneios() {
 
               <Grid item xs={1} style={{ padding: 10 }}>
                 <Button
-                 onClick={handleClick}
-                 color="secondary"
-                 variant="contained"
+                  onClick={handleClick}
+                  color="secondary"
+                  variant="contained"
                 >
                   Filtrar
                 </Button>
@@ -586,10 +618,10 @@ export default function Romaneios() {
                     container
                     justifyContent="center"
                     alignItems="center"
-                    style={{padding :20}}
+                    style={{ padding: 20 }}
                   >
 
-                    <span style={{fontWeight: 'bold', fontSize: 14}}> {totalElements} romaneos encontrados   </span> 
+                    <span style={{ fontWeight: 'bold', fontSize: 14 }}> {totalElements} romaneos encontrados   </span>
 
                     <InputLabel id="size">Elementos por página:</InputLabel>
                     <Select
@@ -620,10 +652,10 @@ export default function Romaneios() {
                       count={totalPages}
                       page={page}
                       onChange={handleChangePage}
-                      variant="outlined" 
+                      variant="outlined"
                       size="large"
                       color="primary"
-                      />
+                    />
 
                   </Grid>
 
