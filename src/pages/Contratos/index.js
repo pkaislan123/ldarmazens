@@ -252,7 +252,7 @@ export default function Contratos() {
           <TableHead>
 
             <TableRow  >
-              <TableCell colSpan={1}></TableCell>
+              <TableCell style={{ backgroundColor: 'blue', color: 'white', position: "sticky", top: 0, textAlign: "center" }} colSpan={1}></TableCell>
               <TableCell style={{ backgroundColor: 'brown', color: 'white', position: "sticky", top: 0 }} align="center" colSpan={1}>ID</TableCell>
               <TableCell style={{ backgroundColor: 'brown', color: 'white', position: "sticky", top: 0 }} colSpan={1}>Código</TableCell>
               <TableCell style={{ backgroundColor: 'brown', color: 'white', position: "sticky", top: 0 }} colSpan={1}>Data Contrato</TableCell>
@@ -280,10 +280,10 @@ export default function Contratos() {
             ))}
           </TableBody>
 
-          <TableBody style={{position: "sticky", bottom: 0 }}>
+          <TableBody style={{ position: "sticky", bottom: 0 }}>
             <TableRow>
               <TableCell style={{ fontSize: 12, backgroundColor: 'green', color: 'white' }} colSpan={1}>Num CTRS:</TableCell>
-              <TableCell style={{ fontSize: 14, backgroundColor: 'green', color: 'white'}} colSpan={1} align="right"> {quantidade_ctrs} </TableCell>
+              <TableCell style={{ fontSize: 14, backgroundColor: 'green', color: 'white' }} colSpan={1} align="right"> {quantidade_ctrs} </TableCell>
 
               <TableCell style={{ fontSize: 0, backgroundColor: 'black', color: 'white' }} colSpan={4}> </TableCell>
               <TableCell style={{ fontSize: 12, backgroundColor: 'green', color: 'white' }} colSpan={2}>Total Contratado:</TableCell>
@@ -294,7 +294,7 @@ export default function Contratos() {
               <TableCell style={{ fontSize: 0, backgroundColor: 'black', color: 'white' }} colSpan={3}> </TableCell>
 
               <TableCell style={{ fontSize: 12, backgroundColor: 'green', color: 'white' }} colSpan={1}>Valor Total:</TableCell>
-              <TableCell style={{ fontSize: 14, backgroundColor: 'green', color: 'white'}} colSpan={3} align="right"> {formatter.format(valor_total)} </TableCell>
+              <TableCell style={{ fontSize: 14, backgroundColor: 'green', color: 'white' }} colSpan={3} align="right"> {formatter.format(valor_total)} </TableCell>
 
             </TableRow>
 
@@ -303,7 +303,7 @@ export default function Contratos() {
               <TableCell style={{ fontSize: 0, backgroundColor: 'green', color: 'white' }} colSpan={1} align="right">  </TableCell>
               <TableCell style={{ fontSize: 0, backgroundColor: 'black', color: 'white' }} colSpan={4}> </TableCell>
               <TableCell style={{ fontSize: 12, backgroundColor: 'green', color: 'white' }} colSpan={2}>Quantidade Total Recebida:</TableCell>
-              <TableCell style={{ fontSize: 14, backgroundColor: 'green', color: 'white'}} colSpan={2} align="right"> {quantidadeRecebida.toLocaleString('pt-BR', {
+              <TableCell style={{ fontSize: 14, backgroundColor: 'green', color: 'white' }} colSpan={2} align="right"> {quantidadeRecebida.toLocaleString('pt-BR', {
                 minimumFractionDigits: 3,
                 maximumFractionDigits: 3
               })} sacos </TableCell>
@@ -313,8 +313,8 @@ export default function Contratos() {
             </TableRow>
 
             <TableRow>
-              <TableCell style={{ fontSize: 0, backgroundColor: 'green', color: 'white'}} colSpan={1}></TableCell>
-              <TableCell style={{ fontSize: 0, backgroundColor: 'green', color: 'white'}} colSpan={1} align="right">  </TableCell>
+              <TableCell style={{ fontSize: 0, backgroundColor: 'green', color: 'white' }} colSpan={1}></TableCell>
+              <TableCell style={{ fontSize: 0, backgroundColor: 'green', color: 'white' }} colSpan={1} align="right">  </TableCell>
               <TableCell style={{ fontSize: 0, backgroundColor: 'black', color: 'white' }} colSpan={4}> </TableCell>
               <TableCell style={{ fontSize: 12, backgroundColor: 'green', color: 'white' }} colSpan={2}>Quantidade a Receber:</TableCell>
               <TableCell style={{ fontSize: 14, backgroundColor: 'green', color: 'white' }} colSpan={2} align="right"> {(quantidade - quantidadeRecebida).toLocaleString('pt-BR', {
@@ -342,6 +342,53 @@ export default function Contratos() {
     const { row } = props;
     const [open, setOpen] = React.useState(false);
 
+    const baixar = (url) => {
+      baixarArquivo(url);
+    }
+  
+
+
+    async function baixarArquivo(url, codigo) {
+      try {
+  
+        const token = Cookies.get('token');
+  
+        const headers = {
+          'Authorization': 'Bearer ' + token
+        }
+  
+  
+        url = url.replaceAll(" ", ";");
+        url = url.replaceAll("\\", "@");
+  
+        const id_usuario = Cookies.get('id_usuario');
+        console.log("id na tela de romaneios: " + id_usuario)
+  
+  
+        await api.get("v1/protected/nuvem/salvar", {
+          responseType: 'blob',
+          params: {
+            urlarquivo: url,
+          },
+          headers: headers
+        }).then(function (response) {
+  
+          const file = new Blob(
+            [response.data],
+            { type: 'application/pdf' });
+          const fileURL = URL.createObjectURL(file);
+  
+          //Open the URL on new Window
+          window.open(fileURL);
+        });
+  
+      } catch (_err) {
+        // avisar('Houve um problema com o login, verifique suas credenciais! ' + cpf + " " + senha );
+        console.log("Erro ao tentar donwload " + _err)
+  
+      }
+  
+    }
 
     function setOpenInfoExtra(open) {
       setOpen(open);
@@ -453,7 +500,7 @@ export default function Contratos() {
               <Box sx={{ margin: 1 }}>
                 <Paper elevation={3} style={{ margin: 10 }} >
                   <Grid container spacing={1} style={{ padding: 10 }}>
-                    <Grid item xs={12}>
+                    <Grid item xs={6}>
 
                       <Typography >
                         Informações do Contrato:
@@ -476,6 +523,29 @@ export default function Contratos() {
                           maximumFractionDigits: 3
                         })} sacos
                       </Typography>
+                    </Grid>
+                    <Grid  xs={6} container direction='column' >
+
+                      <Button
+                        onClick={() => { baixar(row.caminho_arquivo, row.codigo) }}
+                        color="primary"
+                        variant="contained"
+                        size="small"
+                        style={{ fontSize: 12, marginTop: 10, marginBottom: 10 }}
+                      >
+                       Contrato Original
+                      </Button>
+                      <Button
+                        onClick={() => { baixar(row.caminho_diretorio + "//comprovantes//comprovante_assinatura_" +  row.codigo + ".pdf" , row.codigo) }}
+                        color="secondary"
+                        variant="contained"
+                        size="small"
+                        style={{ fontSize: 12, marginTop: 10, marginBottom: 10 }}
+
+                      >
+                        Contrato Assinado
+                      </Button>
+
                     </Grid>
 
 

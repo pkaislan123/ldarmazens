@@ -139,6 +139,7 @@ export default function Romaneios() {
     console.log("numero da pagina: " + num_pagina)
     setParametros(prevState => ({ ...prevState, 'page': num_pagina }))
     setClick(click + 1)
+    listarMeusDados();
 
   };
 
@@ -147,6 +148,7 @@ export default function Romaneios() {
 
     setParametros(prevState => ({ ...prevState, [e.target.name]: e.target.value }))
     setClick(click + 1)
+    listarMeusDados();
 
   }
 
@@ -348,15 +350,22 @@ export default function Romaneios() {
       const id_usuario = Cookies.get('id_usuario');
       console.log("id na tela de romaneios: " + id_usuario)
 
-      await api.get("v1/protected/nuvem/baixar", {
+
+      await api.get("v1/protected/nuvem/salvar", {
+        responseType: 'blob',
         params: {
           urlarquivo: url,
         },
         headers: headers
       }).then(function (response) {
-        console.log("url de download" + response.data);
-        window.open(response.data, '_blank');
 
+        const file = new Blob(
+          [response.data],
+          { type: 'application/pdf' });
+        const fileURL = URL.createObjectURL(file);
+
+        //Open the URL on new Window
+        window.open(fileURL);
       });
 
     } catch (_err) {
@@ -376,17 +385,34 @@ export default function Romaneios() {
     return (
       <React.Fragment>
         <TableRow sx={{ '& > *': { borderBottom: 'unset' } }}>
-          
+
           <TableCell colSpan={1} align="right">
 
-              <Button
-              onClick={()=>{baixar(row.caminho_arquivo, row.codigo)}}
-              color="secondary"
-                variant="contained"
-              >
-                Baixar
-              </Button>
+            <Button
+              onClick={() => { baixar(row.caminho_arquivo, row.codigo) }}
+              color="primary"
+              variant="contained"
+              size="small"
+              style={{fontSize:12}}
+            >
+              Baixar Original
+            </Button>
           </TableCell>
+
+          <TableCell colSpan={1} align="right">
+
+            <Button
+              onClick={() => { baixar(row.caminho_arquivo_comprovante, row.codigo) }}
+              color="secondary"
+              variant="contained"
+              size="small"
+              style={{fontSize:12}}
+
+            >
+              Baixar Comprovante
+            </Button>
+          </TableCell>
+
 
           <TableCell colSpan={1} align="right">{row.id}</TableCell>
           <TableCell colSpan={1} align="right">{row.codigo}</TableCell>
@@ -427,7 +453,7 @@ export default function Romaneios() {
           <TableHead>
 
             <TableRow  >
-              <TableCell colSpan={1}></TableCell>
+              <TableCell style={{ backgroundColor: 'blue', color: 'white', position: "sticky", top: 0 , textAlign:"center" }}  colSpan={2}>Arquivos</TableCell>
               <TableCell style={{ backgroundColor: 'brown', color: 'white', position: "sticky", top: 0 }} align="center" colSpan={1}>ID</TableCell>
               <TableCell style={{ backgroundColor: 'brown', color: 'white', position: "sticky", top: 0 }} colSpan={1}>Código</TableCell>
               <TableCell style={{ backgroundColor: 'brown', color: 'white', position: "sticky", top: 0 }} colSpan={1}>Operação</TableCell>
