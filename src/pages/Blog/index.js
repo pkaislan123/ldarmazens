@@ -235,33 +235,33 @@ const Blog = () => {
         >
 
           <a
-            href={"/noticias/ldarmazens"}>
+            href={"/noticias/" + encodeURIComponent("Informativos LD")}>
             <span style={{ paddingLeft: 10, paddingRight: 10, width: '100%', textAlign: 'center', fontSize: 16 }} > Informativos da LD Armazém</span>
           </a>
 
           <a
-            href={"/noticias/tecnologia"}>
+            href={"/noticias/" +  encodeURIComponent("Tecnologia")}>
             <span style={{ paddingLeft: 10, paddingRight: 10, width: '100%', textAlign: 'center', fontSize: 16 }} > Tecnologia</span>
           </a>
 
           <a
-            href={"/noticias/fertilizantes"}>
+            href={"/noticias/" + encodeURIComponent("Fertilizantes")}>
             <span style={{ paddingLeft: 10, paddingRight: 10, width: '100%', textAlign: 'center', fontSize: 16 }} > Fertilizantes</span>
           </a>
 
           <a
-            href={"/noticias/pecuaria"}>
+            href={"/noticias/" + encodeURIComponent("Pecuaria")}>
             <span style={{ paddingLeft: 10, paddingRight: 10, width: '100%', textAlign: 'center', fontSize: 16 }} > Pecuária</span>
           </a>
 
           <a
-            href={"/noticias/agronecio"}>
+            href={"/noticias/" + encodeURIComponent("Agronegocio")}>
             <span style={{ paddingLeft: 10, paddingRight: 10, width: '100%', textAlign: 'center', fontSize: 16 }} > Agronegócio</span>
           </a>
 
 
           <a
-            href={"/noticias/commodities"}>
+            href={"/noticias/" + encodeURIComponent("Soja, Sorgo e Milho")}>
             <span style={{ paddingLeft: 10, paddingRight: 10, width: '100%', textAlign: 'center', fontSize: 16 }} > Soja, Milho e Sorgo</span>
           </a>
 
